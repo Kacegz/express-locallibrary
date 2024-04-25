@@ -12,6 +12,12 @@ const helmet = require("helmet");
 
 const app = express();
 
+const RateLimit = require("express-rate-limit");
+const limiter = RateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 20,
+});
+
 const mongoose = require("mongoose");
 mongoose.set("strictQuery", false);
 const mongoDB = process.env.MONGODB_URI;
@@ -19,12 +25,6 @@ main().catch((err) => console.log(err));
 async function main() {
   await mongoose.connect(mongoDB);
 }
-
-const RateLimit = require("express-rate-limit");
-const limiter = RateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 20,
-});
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
