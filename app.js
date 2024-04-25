@@ -7,18 +7,24 @@ const logger = require("morgan");
 const indexRouter = require("./routes/index");
 const usersRouter = require("./routes/users");
 const catalogRouter = require("./routes/catalog");
+const compression = require("compression");
+const helmet = require("helmet");
 
 const app = express();
 
 const mongoose = require("mongoose");
 mongoose.set("strictQuery", false);
-const mongoDB =
-  "mongodb+srv://kacper:kacper123@cluster0.0hibmbp.mongodb.net/local_library?retryWrites=true&w=majority&appName=Cluster0";
-
+const mongoDB = process.env.MONGODB_URI;
 main().catch((err) => console.log(err));
 async function main() {
   await mongoose.connect(mongoDB);
 }
+
+const RateLimit = require("express-rate-limit");
+const limiter = RateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 20,
+});
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
@@ -28,7 +34,16 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(limiter);
+app.use(compression());
 app.use(express.static(path.join(__dirname, "public")));
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      "script-src": ["'self'", "code.jquery.com", "cdn.jsdelivr.net"],
+    },
+  })
+);
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
